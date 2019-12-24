@@ -52,6 +52,7 @@ pub fn gpstr_to_hexstr(gpstr: &[u8]) -> Result<Vec<u8>> {
     Ok(hexstr)
 }
 
+#[allow(dead_code)]
 pub enum U32Kind {
     BE,
     LE,
@@ -164,6 +165,7 @@ pub fn bigint_expmod(base: &BigInt,exp: &BigInt,modular: &BigInt) -> Result<BigI
     Ok(result)
 }
 
+#[allow(dead_code)]
 pub fn bigint_fmm(op1: &BigInt,op2: &BigInt,op_mod: &BigInt) -> Result<BigInt> {
 
     let op_mod_fmm_context = BigIntFMMContext::new(op_mod.get_bit_count(),&op_mod)?;
@@ -184,10 +186,9 @@ pub fn bigint_fmm(op1: &BigInt,op2: &BigInt,op_mod: &BigInt) -> Result<BigInt> {
 }
 
 
-
 pub type  BigDigit = u32;
 pub type  DoubleBigDigit = u64;
-pub type  BigIntData = Vec<BigDigit>;
+// pub type  BigIntData = Vec<BigDigit>;
 pub const BITS: usize = 32;
 pub type SignedDoubleBigDigit = i64;
 
