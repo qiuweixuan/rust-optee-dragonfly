@@ -11,18 +11,14 @@ use optee_utee::{AlgorithmId, Digest,Mac};
 use optee_utee::{AttributeId, AttributeMemref, TransientObject, TransientObjectType};
 use optee_utee::{Random};
 
-use optee_utee::{Error, ErrorKind};
-
-use  super::gp_bigint;
-
-struct DigestOp {
-    op: Digest,
-}
-
-use std::cmp;
+use super::gp_bigint;
 
 
 
+
+
+
+#[allow(dead_code)]
 static  DH_GROUP5_PRIME: [u8;192] = [
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xC9, 0x0F, 0xDA, 0xA2, 0x21, 0x68, 0xC2, 0x34,
@@ -49,6 +45,8 @@ static  DH_GROUP5_PRIME: [u8;192] = [
 	0xF1, 0x74, 0x6C, 0x08, 0xCA, 0x23, 0x73, 0x27,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 ];
+
+#[allow(dead_code)]
 static DH_GROUP5_ORDER: [u8;192] = [
 	0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xE4, 0x87, 0xED, 0x51, 0x10, 0xB4, 0x61, 0x1A,
@@ -264,7 +262,7 @@ impl<'a> Peer<'a>{
 
     pub fn mac2vec(mac: &[u8]) -> Vec<u8>{
         use atoi::atoi;
-        let mut split_mac = mac.split(|c| *c == b':');
+        let split_mac = mac.split(|c| *c == b':');
         let mut ret: Vec<u8>= Vec::new();
         for it in split_mac{
             let num = atoi::<u8>(it).unwrap();  
@@ -335,7 +333,7 @@ impl<'a> Peer<'a>{
         // trace_println!("message:{:x?}",message);
         
 
-        let message_pre_len = message.len();
+        
         
         let mac_len: usize = 32;
         let mut pos: usize = 0;
@@ -581,7 +579,7 @@ impl<'a> Peer<'a>{
 
         let len = std::cmp::min(data.len(),16);
         let mut pmkid = vec![0u8;16];
-        for i in (0..len){
+        for i in 0..len{
             pmkid[i] = data[i];
         }
         trace_println!("pmkid:\n {:02x?}", &pmkid);
@@ -608,7 +606,7 @@ impl<'a> Peer<'a>{
         Ok((kck,ss_hex,token))
     }
 
-     pub fn confirm_exchange(self: &Self,peer_scalar: &BigInt, peer_element: &BigInt,password_element: &BigInt,private: &BigInt,scalar: &BigInt,element: &BigInt,
+     pub fn confirm_exchange(self: &Self,peer_scalar: &BigInt, peer_element: &BigInt,scalar: &BigInt,element: &BigInt,
                             kck: &[u8],ss_hex: &[u8],peer_token: &[u8]) -> Result<()> {
         let mut peer_message = Vec::new();
         peer_message.extend(ss_hex);
@@ -630,6 +628,11 @@ impl<'a> Peer<'a>{
 
 
     pub fn hmac_sha256(input_key: &[u8], data: &[u8],out: &mut [u8]) -> Result<usize> {
+        
+        struct DigestOp {
+            pub op: Digest
+        };
+        
         const MAX_KEY_SIZE: usize = 128;
         const MIN_KEY_SIZE: usize = 24;
 
@@ -640,7 +643,7 @@ impl<'a> Peer<'a>{
             key.extend(vec![0u8;MIN_KEY_SIZE - key.len()]);
         }
         if key.len() > MAX_KEY_SIZE {
-            let sha256_op = DigestOp{op:Digest::allocate(AlgorithmId::Sha256).unwrap()};
+            let sha256_op = DigestOp{op: Digest::allocate(AlgorithmId::Sha256).unwrap()};
             sha256_op.op.do_final(&input_key,&mut key).unwrap();
         }
 

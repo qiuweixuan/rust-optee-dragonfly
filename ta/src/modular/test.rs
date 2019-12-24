@@ -1,8 +1,7 @@
-use std::u8;
-use optee_utee::{BigInt,BigIntFMMContext,BigIntFMM};
-use optee_utee::{
-     trace_println
-};
+// use optee_utee::{BigInt,BigIntFMMContext,BigIntFMM};
+// use optee_utee::{
+//      trace_println
+// };
 use optee_utee::{Result};
 use optee_utee::{AlgorithmId, Digest,Mac};
 use optee_utee::{AttributeId, AttributeMemref, TransientObject, TransientObjectType};
@@ -19,7 +18,24 @@ use  super::dragonfly_ffc;
 
 use dragonfly_ffc::{FFCElement,Peer};
 
+#[test]
+pub fn test_bigint() -> Result<()> {
 
+    test_div_rem()?;
+    test_div_rem_core()?;
+    test_bigint_expmod()?;
+    test_fmm()?;
+    Ok(())
+}
+
+#[test]
+pub fn test_peer() -> Result<()> {
+    test_dragonfly_key_exchange()?;
+    Ok(())
+}
+
+
+#[test]
 pub fn test_dragonfly_key_exchange() -> Result<()> {
 
     trace_println!("\n[+] TA invoke test_dragonfly_key_exchange\n");
@@ -73,9 +89,9 @@ pub fn test_dragonfly_key_exchange() -> Result<()> {
     let (ap_kck,ap_ss_hex,ap_token) = peer_ap.compute_shared_secret(&sta_scalar,&sta_element,&ap_password_element,&ap_private,&ap_scalar,&ap_element)?;
     
     trace_println!("--------------------------");
-    peer_sta.confirm_exchange(&ap_scalar,&ap_element,&sta_password_element,&sta_private,&sta_scalar,&sta_element,&sta_kck,&sta_ss_hex,&ap_token)?;
+    peer_sta.confirm_exchange(&ap_scalar,&ap_element,&sta_scalar,&sta_element,&sta_kck,&sta_ss_hex,&ap_token)?;
     trace_println!("--------------------------");
-    peer_ap.confirm_exchange(&sta_scalar,&sta_element,&ap_password_element,&ap_private,&ap_scalar,&ap_element,&ap_kck,&ap_ss_hex,&sta_token)?;
+    peer_ap.confirm_exchange(&sta_scalar,&sta_element,&ap_scalar,&ap_element,&ap_kck,&ap_ss_hex,&sta_token)?;
     
 
 
@@ -83,7 +99,7 @@ pub fn test_dragonfly_key_exchange() -> Result<()> {
 }
 
 
-
+#[test]
 pub fn test_password_element_derivation() -> Result<()> {
 
     let group5_elemnt: FFCElement = Default::default(); 
@@ -158,7 +174,7 @@ pub fn test_password_element_derivation() -> Result<()> {
 }
 
 
-
+#[test]
 pub fn test_ffc_element_construct() -> Result<()> {
 
     static  DH_GROUP5_PRIME: [u8;192] = [
@@ -241,28 +257,10 @@ pub fn test_ffc_element_construct() -> Result<()> {
 
 
 
-pub fn test_bigint() -> Result<()> {
-
-    test_div_rem()?;
-    test_div_rem_core()?;
-    test_bigint_expmod()?;
-    test_fmm()?;
-    Ok(())
-}
-
-
-pub fn test_peer() -> Result<()> {
-
-    // test_compute_password_base()?;
-    // test_compute_password_key()?;
-    // test_password_element_derivation()?;
-    test_dragonfly_key_exchange()?;
-    Ok(())
-}
 
 
 
-
+#[test]
 pub fn test_div_rem() -> Result<()> {
 
     let a0: BigInt = gp_bigint::bigint_construct_from_hexstr(b"a9fb57dba1eeb")?;
@@ -275,6 +273,7 @@ pub fn test_div_rem() -> Result<()> {
     Ok(())
 }
 
+#[test]
 pub fn test_div_rem_core() -> Result<()> {
 
 
@@ -305,6 +304,7 @@ pub fn test_div_rem_core() -> Result<()> {
     Ok(())
 }
 
+#[test]
 pub fn test_fmm() -> Result<()> {
     let op1 = b"03e8";
     let op2 = b"0640";
@@ -345,7 +345,7 @@ pub fn test_fmm() -> Result<()> {
 
 
 
-
+#[test]
 pub fn test_compute_password_base() -> Result<()> {
 
     let sha256_op = DigestOp{op:Digest::allocate(AlgorithmId::Sha256).unwrap()};
@@ -377,7 +377,7 @@ pub fn test_compute_password_base() -> Result<()> {
 
 
 
-
+#[test]
 pub fn hmac_sha256(key: &[u8], data: &[u8],out: &mut [u8]) -> Result<usize> {
     // const MAX_KEY_SIZE: usize = 64;
     // const MIN_KEY_SIZE: usize = 10;
@@ -407,7 +407,7 @@ pub fn hmac_sha256(key: &[u8], data: &[u8],out: &mut [u8]) -> Result<usize> {
     }
 }
 
-
+#[test]
 pub fn test_compute_password_key() -> Result<()> {
 
     let sha256_op = DigestOp{op:Digest::allocate(AlgorithmId::Sha256).unwrap()};
@@ -466,7 +466,7 @@ pub fn test_compute_password_key() -> Result<()> {
     Ok(())
 }
 
-
+#[test]
 pub fn test_bigint_expmod() -> Result<()> {
     let prime = b"ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552bb9ed529077096966d670c354e4abc9804f1746c08ca237327ffffffffffffffff";
     let order = b"7fffffffffffffffe487ed5110b4611a62633145c06e0e68948127044533e63a0105df531d89cd9128a5043cc71a026ef7ca8cd9e69d218d98158536f92f8a1ba7f09ab6b6a8e122f242dabb312f3f637a262174d31bf6b585ffae5b7a035bf6f71c35fdad44cfd2d74f9208be258ff324943328f6722d9ee1003e5c50b1df82cc6d241b0e2ae9cd348b1fd47e9267afc1b2ae91ee51d6cb0e3179ab1042a95dcf6a9483b84b4b36b3861aa7255e4c0278ba36046511b993ffffffffffffffff";

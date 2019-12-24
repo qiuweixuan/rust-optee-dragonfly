@@ -1,5 +1,5 @@
 [package]
-name = "dragonfly"
+name = "sae"
 version = "0.1.0"
 authors = ["The Rust OP-TEE TrustZone SDK Project Developers"]
 license = "Apache-2.0"

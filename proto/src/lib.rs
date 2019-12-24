@@ -1,14 +1,8 @@
 pub enum Command {
-    Compare,
-    Convert,
-    Add,
-    Sub,
-    Multiply,
-    Divide,
-    Module,
-    TestFFCElement,
-    TestGPBigInt,
-    TestPeer,
+    SetPassword,
+    InitPWE,
+    ComputeSharedSecret,
+    ConfirmExchange,
     Unknown,
 }
 
@@ -16,19 +10,41 @@ impl From<u32> for Command {
     #[inline]
     fn from(value: u32) -> Command {
         match value {
-            0 => Command::Compare,
-            1 => Command::Convert,
-            2 => Command::Add,
-            3 => Command::Sub,
-            4 => Command::Multiply,
-            5 => Command::Divide,
-            6 => Command::Module,
-            7 => Command::TestFFCElement,
-            8 => Command::TestGPBigInt,
-            9 => Command::TestPeer,
+            0 => Command::SetPassword,
+            1 => Command::InitPWE,
+            2 => Command::ComputeSharedSecret,
+            3 => Command::ConfirmExchange,
             _ => Command::Unknown,
         }
     }
 }
 
 pub const UUID: &str = &include_str!(concat!(env!("OUT_DIR"), "/uuid.txt"));
+
+use serde::{Serialize, Deserialize};
+pub use serde_json;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Password {
+    pub pw: Vec::<u8>
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Macs {
+    pub local_mac: Vec::<u8>,
+    pub peer_mac: Vec::<u8>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CommitElement {
+    pub scalar: Vec::<u8>,
+    pub element: Vec::<u8>,
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Token {
+    pub token: Vec::<u8>
+}
+

@@ -1,15 +1,11 @@
 use optee_utee::{BigInt,BigIntFMMContext,BigIntFMM};
-use optee_utee::{
-     trace_println,
-};
 use optee_utee::{Error,ErrorKind,Result};
-use std::u8;
+use std::{u8,u32};
 use std::cmp::Ordering::{self, Equal, Greater, Less};
-use std::u32;
 use std::iter::repeat;
 
 
-//gpstr_from_hexstr
+
 pub fn gpstr_from_hexstr(bytes_str: &[u8]) -> Result<Vec<u8>> {
     let radix: u8 = 16;
     let bytes_str_len: usize = bytes_str.len();
@@ -144,7 +140,7 @@ pub fn bigint_expmod(base: &BigInt,exp: &BigInt,modular: &BigInt) -> Result<BigI
             let mut mul = BigInt::multiply(&result,&base_pow_i);
             bigint_normalize(&mut mul);
             // let ( _ , rem) = bigint_div_rem(&mul,&modular)?;
-            let mut rem = BigInt::module(&mul,&modular);
+            let rem = BigInt::module(&mul,&modular);
             result = rem;
             //result = bigint_assign(&rem);
             bigint_normalize(&mut result);
@@ -156,7 +152,7 @@ pub fn bigint_expmod(base: &BigInt,exp: &BigInt,modular: &BigInt) -> Result<BigI
         let mut mul = BigInt::multiply(&base_pow_i,&base_pow_i);
         bigint_normalize(&mut mul);
         // let ( _ , rem) = bigint_div_rem(&mul,&modular)?;
-        let mut rem = BigInt::module(&mul,&modular);
+        let rem = BigInt::module(&mul,&modular);
         base_pow_i = rem;
         bigint_normalize(&mut base_pow_i);
         

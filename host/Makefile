@@ -1,4 +1,4 @@
-NAME := dragonfly
+NAME := sae
 ARCH ?= aarch64
 
 OPTEE_DIR ?= ../../../optee
