@@ -13,6 +13,8 @@ proto = { path = "../proto" }
 optee-utee-sys = { path = "../../../optee-utee/optee-utee-sys" }
 optee-utee = { path = "../../../optee-utee" }
 atoi = "0.3.2"
+num-bigint = "0.3.0"
+hex = "0.3.1"
 
 
 [build_dependencies]

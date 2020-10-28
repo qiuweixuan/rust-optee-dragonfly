@@ -5,6 +5,9 @@ use std::cmp::Ordering::{self, Equal, Greater, Less};
 use std::iter::repeat;
 
 
+// 使用num_bigint所需要的库
+use num_bigint::BigUint;
+
 
 pub fn gpstr_from_hexstr(bytes_str: &[u8]) -> Result<Vec<u8>> {
     let radix: u8 = 16;
@@ -104,15 +107,21 @@ pub fn bigint_construct_from_s32(src: i32)-> BigInt {
 }
 
 pub fn bigint_assign(src: &BigInt) -> BigInt {
-   /*  
-    let mut dst = BigInt::new(src.get_bit_count());
-    let src_str = src.convert_to_octet_string()?;
-    dst.convert_from_octet_string(&src_str,0)?;
-    Ok(dst)
-   */
     BigInt{data: src.data.clone()}
 }
 
+
+pub fn numbiguint_to_gpbigint(src: &BigUint) -> BigInt {
+    // 获取十六进制字符串src_hex_str
+    let src_hex_str = src.to_str_radix(16);
+    bigint_construct_from_hexstr(&src_hex_str.as_bytes()).unwrap()
+}
+
+pub fn gpbigint_to_numbiguint(src: &BigInt) ->  BigUint {
+    // 获取十六进制字符串src_hex_str
+    let src_hex_str =  bigint_to_hexstr(&src).unwrap(); 
+    BigUint::parse_bytes(&src_hex_str,16).unwrap()
+}
 
 
 
@@ -132,36 +141,46 @@ int mod(int a,int b,int m){
 */   
 //https://blog.csdn.net/chen77716/article/details/7093600
 pub fn bigint_expmod(base: &BigInt,exp: &BigInt,modular: &BigInt) -> Result<BigInt> {
-    let mut result : BigInt = bigint_construct_from_s32(1);
-    let mut base_pow_i = bigint_assign(base);
+    let biguint_base = gpbigint_to_numbiguint(&base);
+    let biguint_exp = gpbigint_to_numbiguint(&exp);
+    let biguint_modular = gpbigint_to_numbiguint(&modular);
+
+    let biguint_result = biguint_base.modpow(&biguint_exp,&biguint_modular);
+    let result = numbiguint_to_gpbigint(&biguint_result);
     
-    for i in 0..exp.get_bit_count(){
-        if exp.get_bit(i) {
+
+    // bigint_normalize(&mut result);
+
+    // let mut result : BigInt = bigint_construct_from_s32(1);
+    // let mut base_pow_i = bigint_assign(base);
+    
+    // for i in 0..exp.get_bit_count(){
+    //     if exp.get_bit(i) {
             
-            let mut mul = BigInt::multiply(&result,&base_pow_i);
-            bigint_normalize(&mut mul);
-            // let ( _ , rem) = bigint_div_rem(&mul,&modular)?;
-            let rem = BigInt::module(&mul,&modular);
-            result = rem;
-            //result = bigint_assign(&rem);
-            bigint_normalize(&mut result);
+    //         let mut mul = BigInt::multiply(&result,&base_pow_i);
+    //         bigint_normalize(&mut mul);
+    //         // let ( _ , rem) = bigint_div_rem(&mul,&modular)?;
+    //         let rem = BigInt::module(&mul,&modular);
+    //         result = rem;
+    //         //result = bigint_assign(&rem);
+    //         bigint_normalize(&mut result);
            
-            // result = BigInt::mul_mod(&result,&base_pow_i,&modular);
-            // bigint_normalize(&mut result);
-        }
+    //         // result = BigInt::mul_mod(&result,&base_pow_i,&modular);
+    //         // bigint_normalize(&mut result);
+    //     }
         
-        let mut mul = BigInt::multiply(&base_pow_i,&base_pow_i);
-        bigint_normalize(&mut mul);
-        // let ( _ , rem) = bigint_div_rem(&mul,&modular)?;
-        let rem = BigInt::module(&mul,&modular);
-        base_pow_i = rem;
-        bigint_normalize(&mut base_pow_i);
+    //     let mut mul = BigInt::multiply(&base_pow_i,&base_pow_i);
+    //     bigint_normalize(&mut mul);
+    //     // let ( _ , rem) = bigint_div_rem(&mul,&modular)?;
+    //     let rem = BigInt::module(&mul,&modular);
+    //     base_pow_i = rem;
+    //     bigint_normalize(&mut base_pow_i);
         
 
-        // result = BigInt::mul_mod(&base_pow_i,&base_pow_i,&modular);
-        // bigint_normalize(&mut result);
+    //     // result = BigInt::mul_mod(&base_pow_i,&base_pow_i,&modular);
+    //     // bigint_normalize(&mut result);
         
-    }
+    // }
     Ok(result)
 }
 
