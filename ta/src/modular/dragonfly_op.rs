@@ -334,13 +334,13 @@ impl<'a>  DragonflyOp<'a> {
 impl<'a>  DragonflyOp<'a> {
 
     fn mac2vec(mac: &[u8]) -> Vec<u8>{
-        use atoi::atoi;
+        // use atoi::atoi;
         use atoi::FromRadix16;
         let split_mac = mac.split(|c| *c == b':');
         let mut ret: Vec<u8>= Vec::new();
         for it in split_mac{
             // let num = atoi::<u8>(it).unwrap();  
-            let (num,_) = u32::from_radix_16(it);
+            let (num,_) = u8::from_radix_16(it);
             ret.push(num);
         }
         ret
