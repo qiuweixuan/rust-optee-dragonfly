@@ -184,25 +184,6 @@ pub fn bigint_expmod(base: &BigInt,exp: &BigInt,modular: &BigInt) -> Result<BigI
     Ok(result)
 }
 
-#[allow(dead_code)]
-pub fn bigint_fmm(op1: &BigInt,op2: &BigInt,op_mod: &BigInt) -> Result<BigInt> {
-
-    let op_mod_fmm_context = BigIntFMMContext::new(op_mod.get_bit_count(),&op_mod)?;
-
-    let mut op1_fmm = BigIntFMM::new(op1.get_bit_count());
-    op1_fmm.convert_from_big_int(&op1,&op_mod,&op_mod_fmm_context);
-
-    let mut op2_fmm = BigIntFMM::new(op2.get_bit_count());
-    op2_fmm.convert_from_big_int(&op2,&op_mod,&op_mod_fmm_context);
-
-    let mut result_fmm = BigIntFMM::new(op_mod.get_bit_count());
-    result_fmm.compute_fmm(&op1_fmm,&op2_fmm,&op_mod,&op_mod_fmm_context);
-
-    let mut result_bigint = BigInt::new(op_mod.get_bit_count());
-    result_bigint.convert_from_big_int_fmm(&result_fmm,&op_mod,&op_mod_fmm_context);
-    //trace_println!("fmm_result:{}",result_bigint);
-    Ok(result_bigint)
-}
 
 
 pub type  BigDigit = u32;
