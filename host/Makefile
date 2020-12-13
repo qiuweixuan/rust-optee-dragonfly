@@ -1,4 +1,4 @@
-NAME := sae
+NAME := sae_core
 ARCH ?= aarch64
 
 OPTEE_DIR ?= ../../../optee

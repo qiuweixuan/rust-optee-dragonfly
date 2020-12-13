@@ -31,9 +31,9 @@ pub struct Password {
 
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Macs {
-    pub local_mac: Vec::<u8>,
-    pub peer_mac: Vec::<u8>,
+pub struct Randoms {
+    pub client_random: Vec::<u8>,
+    pub server_random: Vec::<u8>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

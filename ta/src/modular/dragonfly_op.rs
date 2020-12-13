@@ -15,7 +15,7 @@ use optee_utee::{Error, ErrorKind};
 
 use super::gp_bigint;
 use super::ffc_op::{FFCElement};
-use proto::{Macs};
+use proto::{Randoms};
 
 // use std::{cmp};
 
@@ -51,8 +51,8 @@ pub struct DragonflyOp<'a> {
     pub ffc_elemnt:  FFCElement<'a>,
     //password =》 通信对象:Password,计算对象:Vec::<u8>
     pub password: Option<Vec::<u8>>,
-    //Macs是否引入了耦合？
-    pub macs:  Option<Macs>,
+    //Randoms是否引入了耦合？
+    pub macs:  Option<Randoms>,
 
     pub password_element: Option<BigInt>,
     pub private_mask: Option<PrivateMask>,
@@ -83,11 +83,11 @@ impl Default for DragonflyOp<'static> {
 
 
 impl<'a>  DragonflyOp<'a> {
-    // pub fn initiate(self: &Self,local_password: &[u8],local_mac: &[u8],peer_mac: &[u8]) -> Result<BigInt> {
+    // pub fn initiate(self: &Self,local_password: &[u8],client_random: &[u8],server_random: &[u8]) -> Result<BigInt> {
     pub fn initiate(self: &mut Self) -> Result<()> {
-        let input_macs: &proto::Macs =   Self::handle_option(&self.macs)?;
-        let local_mac: &[u8] = input_macs.local_mac.as_ref();
-        let peer_mac: &[u8] =  input_macs.peer_mac.as_ref();
+        let input_randoms: &proto::Randoms =   Self::handle_option(&self.macs)?;
+        let client_random: &[u8] = input_randoms.client_random.as_ref();
+        let server_random: &[u8] =  input_randoms.server_random.as_ref();
         let local_password =  Self::handle_option(&self.password)?;
 
         let num_bits = self.ffc_elemnt.prime.get_bit_count();
@@ -100,7 +100,7 @@ impl<'a>  DragonflyOp<'a> {
         let mut password_element = BigInt::new(0);
         while count <= k || found == false{
             
-            let password_base = Self::compute_hashed_password(&local_password,&local_mac, &peer_mac, &count)?;
+            let password_base = Self::compute_hashed_password(&local_password,&client_random, &server_random, &count)?;
             // trace_println!("password_base:{:02x?}",password_base);
 
             let temp = self.compute_password_key(&password_base,label_str,num_bits)?;
@@ -333,30 +333,13 @@ impl<'a>  DragonflyOp<'a> {
 
 impl<'a>  DragonflyOp<'a> {
 
-    fn mac2vec(mac: &[u8]) -> Vec<u8>{
-        use atoi::atoi;
-        use atoi::FromRadix16;
-        let split_mac = mac.split(|c| *c == b':');
-        let mut ret: Vec<u8>= Vec::new();
-        for it in split_mac{
-            // let num = atoi::<u8>(it).unwrap();  
-            let (num,_) = u32::from_radix_16(it);
-            ret.push(num);
-        }
-        ret
-    }
-
-    fn compute_hashed_password(local_password: &[u8],local_mac: &[u8], peer_mac: &[u8],count : &u8) -> Result<([u8; 32])> {
-        let max_mac = std::cmp::max(&local_mac, &peer_mac);
-        let min_mac = std::cmp::min(&local_mac, &peer_mac);
-        
-        let max_mac = &Self::mac2vec(max_mac);
-        let min_mac = &Self::mac2vec(min_mac);
+    fn compute_hashed_password(local_password: &[u8],client_random: &[u8], server_random: &[u8],count : &u8) -> Result<([u8; 32])> {
+        let max_random = std::cmp::max(&client_random, &server_random);
+        let min_random = std::cmp::min(&client_random, &server_random);
         
         let mut key: Vec<u8> = Vec::new();
-        key.extend(max_mac);
-        key.extend(min_mac);
-        // key.extend(vec![0u8;24-key.len()]);
+        key.extend_from_slice(max_random);
+        key.extend_from_slice(min_random);
         trace_println!("key:{:02x?}",&key);
 
         let mut message:Vec<u8> = Vec::new();

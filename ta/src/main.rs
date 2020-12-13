@@ -40,7 +40,6 @@ fn destroy() {
 #[ta_invoke_command]
 fn invoke_command( sess_ctx: &mut DragonflyOp,cmd_id: u32, params: &mut Parameters) -> Result<()> {
     trace_println!("[+] TA invoke command");
-   
     match Command::from(cmd_id) {
         Command::SetPassword => modular::set_password(sess_ctx,params),
         Command::InitPWE => modular::init_pwe(sess_ctx,params),
@@ -56,8 +55,8 @@ const TA_FLAGS: u32 = 0;
 const TA_DATA_SIZE: u32 = 32 * 1024 * 4;
 const TA_STACK_SIZE: u32 = 2 * 1024 * 4;
 const TA_VERSION: &[u8] = b"0.1\0";
-const TA_DESCRIPTION: &[u8] = b"Example of TA using arithmeitcal APIs.\0";
-const EXT_PROP_VALUE_1: &[u8] = b"Dragonfly TA\0";
+const TA_DESCRIPTION: &[u8] = b"SAE Core Lib using RUST-OPTEE APIs.\0";
+const EXT_PROP_VALUE_1: &[u8] = b"SAE Core Lib TA\0";
 const EXT_PROP_VALUE_2: u32 = 0x0010;
 const TRACE_LEVEL: i32 = 4;
 const TRACE_EXT_PREFIX: &[u8] = b"TA\0";

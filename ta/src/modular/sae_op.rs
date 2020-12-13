@@ -32,7 +32,7 @@ pub fn init_pwe(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
     let mut p0 = unsafe { params.0.as_memref().unwrap()};
     let mut p1 = unsafe { params.1.as_memref().unwrap()};
 
-    let macs: proto::Macs = match proto::serde_json::from_slice(p0.buffer()){
+    let macs: proto::Randoms = match proto::serde_json::from_slice(p0.buffer()){
         Ok(res) => res,
         Err(_e) => return Err(Error::new(ErrorKind::BadParameters))
     };
