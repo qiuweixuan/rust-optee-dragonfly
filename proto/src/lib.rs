@@ -3,6 +3,7 @@ pub enum Command {
     InitPWE,
     ComputeSharedSecret,
     ConfirmExchange,
+    GeneRandom,
     Unknown,
 }
 
@@ -14,6 +15,7 @@ impl From<u32> for Command {
             1 => Command::InitPWE,
             2 => Command::ComputeSharedSecret,
             3 => Command::ConfirmExchange,
+            4 => Command::GeneRandom,
             _ => Command::Unknown,
         }
     }
@@ -46,5 +48,15 @@ pub struct CommitElement {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Token {
     pub token: Vec::<u8>
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GeneRandomReq {
+    pub rand_bytes: usize
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GeneRandomRes {
+    pub rand: Vec::<u8>
 }
 

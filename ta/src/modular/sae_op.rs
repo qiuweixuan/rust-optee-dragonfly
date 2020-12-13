@@ -1,6 +1,6 @@
 // use optee_utee::BigInt;
 use optee_utee::{
-     trace_println,
+     trace_println,Random
 };
 use optee_utee::{Error, ErrorKind, Parameters, Result};
 use proto;
@@ -21,7 +21,7 @@ pub fn set_password(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
 
     op.password = Some(password.pw);
     match &op.password{
-        Some(res) => trace_println!("Set password : {:?}",res),
+        Some(res) => trace_println!("Set password : {:02x?}",res),
         None => {}
     };
     
@@ -32,12 +32,12 @@ pub fn init_pwe(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
     let mut p0 = unsafe { params.0.as_memref().unwrap()};
     let mut p1 = unsafe { params.1.as_memref().unwrap()};
 
-    let macs: proto::Randoms = match proto::serde_json::from_slice(p0.buffer()){
+    let randoms: proto::Randoms = match proto::serde_json::from_slice(p0.buffer()){
         Ok(res) => res,
         Err(_e) => return Err(Error::new(ErrorKind::BadParameters))
     };
 
-    op.macs = Some(macs);
+    op.randoms = Some(randoms);
     
     op.initiate()?;
 
@@ -127,6 +127,31 @@ pub fn confirm_exchange(op: &mut DragonflyOp,params: &mut Parameters)-> Result<(
     // // trace_println!("sizeof out: {:?} ", output_vec.len());
     // p1.buffer().write(&output_vec).unwrap();
     // p1.set_updated_size(output_vec.len());
+
+    Ok(())
+}
+
+
+pub fn gene_random(_op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
+    let mut p0 = unsafe { params.0.as_memref().unwrap()};
+    let mut p1 = unsafe { params.1.as_memref().unwrap()};
+
+    let random_req: proto::GeneRandomReq = match proto::serde_json::from_slice(p0.buffer()){
+        Ok(res) => res,
+        Err(_e) => return Err(Error::new(ErrorKind::BadParameters))
+    };
+
+
+    let mut rand_op: Vec<u8> = vec![0u8; random_req.rand_bytes];
+    Random::generate(&mut rand_op);
+    trace_println!("Generate Random : {:02x?}",rand_op);
+
+    let output = proto::GeneRandomRes{
+        rand: rand_op
+    };
+    let output_vec = proto::serde_json::to_vec(&output).unwrap();
+    p1.buffer().write(&output_vec).unwrap();
+    p1.set_updated_size(output_vec.len());
 
     Ok(())
 }

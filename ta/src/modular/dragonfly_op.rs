@@ -40,7 +40,6 @@ pub struct PrivateMask {
 pub struct Secret {
     pub kck: Vec::<u8>,
     pub pmk: Vec::<u8>,
-    pub pmkid: Vec::<u8>,
     pub ss_hex: Vec::<u8>,
     pub token: Vec::<u8>
 }
@@ -52,7 +51,7 @@ pub struct DragonflyOp<'a> {
     //password =》 通信对象:Password,计算对象:Vec::<u8>
     pub password: Option<Vec::<u8>>,
     //Randoms是否引入了耦合？
-    pub macs:  Option<Randoms>,
+    pub randoms:  Option<Randoms>,
 
     pub password_element: Option<BigInt>,
     pub private_mask: Option<PrivateMask>,
@@ -69,7 +68,7 @@ impl Default for DragonflyOp<'static> {
         Self {
            password: None,
            ffc_elemnt: FFCElement::default(),
-           macs: None,
+           randoms: None,
            password_element: None,
            private_mask: None,
            commit_element: None,
@@ -85,7 +84,7 @@ impl Default for DragonflyOp<'static> {
 impl<'a>  DragonflyOp<'a> {
     // pub fn initiate(self: &Self,local_password: &[u8],client_random: &[u8],server_random: &[u8]) -> Result<BigInt> {
     pub fn initiate(self: &mut Self) -> Result<()> {
-        let input_randoms: &proto::Randoms =   Self::handle_option(&self.macs)?;
+        let input_randoms: &proto::Randoms =   Self::handle_option(&self.randoms)?;
         let client_random: &[u8] = input_randoms.client_random.as_ref();
         let server_random: &[u8] =  input_randoms.server_random.as_ref();
         let local_password =  Self::handle_option(&self.password)?;
@@ -239,7 +238,6 @@ impl<'a>  DragonflyOp<'a> {
        /* keyseed = H(<0>32, k)
         * KCK || PMK = KDF-512(keyseed, "SAE KCK and PMK",
         *                      (commit-scalar + peer-commit-scalar) modulo r)
-        * PMKID = L((commit-scalar + peer-commit-scalar) modulo r, 0, 128)
         */
         
         let nullkey: &[u8] = &[0u8;32];
@@ -268,12 +266,6 @@ impl<'a>  DragonflyOp<'a> {
         pmk.extend(key_buf[32..64].iter());
         trace_println!("pmk:\n {:x?}", &pmk);
 
-        let len = std::cmp::min(data.len(),16);
-        let mut  pmkid = vec![0u8;16];
-        for i in 0..len{
-            pmkid[i] = data[i];
-        }
-        trace_println!("pmkid:\n {:02x?}", &pmkid);
 
         let mut token_message = Vec::new();
         token_message.extend(&ss_hex);
@@ -289,7 +281,6 @@ impl<'a>  DragonflyOp<'a> {
         self.secret = Some(Secret{
             kck,
             pmk,
-            pmkid,
             ss_hex,
             token
         });

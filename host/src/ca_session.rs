@@ -17,6 +17,8 @@ fn serde_invoke_command<'a, T:Serialize,U: Deserialize<'a> >(session: &mut Sessi
 
 
 pub fn dragonfly(session: &mut Session,peer_session: &mut Session) -> optee_teec::Result<()> {
+    let mut output_vec = vec![0u8;5000];
+
     let pw: &[u8] = b"abcdefgh";
     let input = proto::Password{
         pw: pw.to_vec()
@@ -33,24 +35,29 @@ pub fn dragonfly(session: &mut Session,peer_session: &mut Session) -> optee_teec
     // let sta_random: &[u8] = b"02:00:00:00:01:00";
     // let ap_random: &[u8] = b"02:00:00:00:00:00";
 
-    let sta_random: &[u8] = b"\x02\x00\x00\x00\x01\x00";
-    let ap_random: &[u8] = b"\x02\x00\x00\x00\x00\x00";
+    
+    let input = proto::GeneRandomReq{
+        rand_bytes: 6
+    };
 
-    let mut output_vec = vec![0u8;5000];
+    // let sta_random: &[u8] = b"\x02\x00\x00\x00\x01\x00";
+    // let ap_random: &[u8] = b"\x02\x00\x00\x00\x00\x00";
+
+    // sta get random request
+    let sta_random_res : proto::GeneRandomRes = serde_invoke_command(session,&mut output_vec,Command::GeneRandom,&input)?;
+    // ap get random request
+    let ap_random_res : proto::GeneRandomRes = serde_invoke_command(peer_session,&mut output_vec,Command::GeneRandom,&input)?;
+    
+    let input = proto::Randoms{
+        client_random: sta_random_res.rand,
+        server_random: ap_random_res.rand,
+    };
 
     // sta commit element
-    let input = proto::Randoms{
-        client_random: sta_random.to_vec(),
-        server_random: ap_random.to_vec(),
-    };
     let sta_commit_element : proto::CommitElement = serde_invoke_command(session,&mut output_vec,Command::InitPWE,&input)?;
     // println!("sta commit element : scalar: {:?} \n  element: {:?}",&sta_commit_element.scalar,&sta_commit_element.element);
     
     // ap commit element
-    let input = proto::Randoms{
-        client_random: sta_random.to_vec(),
-        server_random: ap_random.to_vec(),
-    };
     let ap_commit_element : proto::CommitElement = serde_invoke_command(peer_session,&mut output_vec,Command::InitPWE,&input)?;
     // println!("ap commit element : scalar: {:?} \n  element: {:?}",&ap_commit_element.scalar,&ap_commit_element.element);
 
