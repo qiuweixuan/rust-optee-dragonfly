@@ -5,26 +5,45 @@ use optee_utee::{
 use optee_utee::{Error, ErrorKind, Parameters, Result};
 use proto;
 
-use super::dragonfly_op;
-use super::dragonfly_op::DragonflyOp;
+
+use super::dragonfly_op::{self,DragonflyOp};
 use super::gp_bigint;
+use super::password;
 use std::io::Write;
 // use std::mem;
 
-pub fn set_password(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
+
+pub fn init_mem_user_password(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
     let mut p0 = unsafe { params.0.as_memref().unwrap()};
 
-    let password: proto::Password =  match proto::serde_json::from_slice(p0.buffer()){
+    let req: proto::InitMemUserPasswordReq =  match proto::serde_json::from_slice(p0.buffer()){
         Ok(res) =>res,
         Err(_e) => return Err(Error::new(ErrorKind::BadParameters))
     };
+    trace_println!("InitMemUserPasswordReq: {:02x?}",req);
 
-    op.password = Some(password.pw);
-    match &op.password{
-        Some(res) => trace_println!("Set password : {:02x?}",res),
-        None => {}
-    };
+    op.pwd_name = Some(req.pwd_name);
+    op.password = Some(req.pw);
     
+    Ok(())
+}
+
+
+pub fn load_dev_user_password(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
+    let mut p0 = unsafe { params.0.as_memref().unwrap()};
+
+    let mut req: proto::LoadDevUserPasswprdReq =  match proto::serde_json::from_slice(p0.buffer()){
+        Ok(res) =>res,
+        Err(_e) => return Err(Error::new(ErrorKind::BadParameters))
+    };
+    trace_println!("LoadDevUserPasswprdReq: {:02x?}",req);
+
+    let is_load = true;
+    let pw = password::read_password(&mut req.pwd_name)?;
+
+    op.pwd_name = Some(req.pwd_name);
+    op.password = Some(pw);
+
     Ok(())
 }
 
@@ -32,7 +51,7 @@ pub fn init_pwe(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
     let mut p0 = unsafe { params.0.as_memref().unwrap()};
     let mut p1 = unsafe { params.1.as_memref().unwrap()};
 
-    let randoms: proto::Randoms = match proto::serde_json::from_slice(p0.buffer()){
+    let randoms: proto::SessionRandoms = match proto::serde_json::from_slice(p0.buffer()){
         Ok(res) => res,
         Err(_e) => return Err(Error::new(ErrorKind::BadParameters))
     };

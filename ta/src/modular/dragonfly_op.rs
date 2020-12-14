@@ -15,7 +15,7 @@ use optee_utee::{Error, ErrorKind};
 
 use super::gp_bigint;
 use super::ffc_op::{FFCElement};
-use proto::{Randoms};
+use proto::{SessionRandoms};
 
 // use std::{cmp};
 
@@ -48,15 +48,22 @@ pub struct Secret {
 
 pub struct DragonflyOp<'a> {
     pub ffc_elemnt:  FFCElement<'a>,
-    //password =》 通信对象:Password,计算对象:Vec::<u8>
-    pub password: Option<Vec::<u8>>,
-    //Randoms是否引入了耦合？
-    pub randoms:  Option<Randoms>,
 
+    //用于本次会话的用户名
+    pub pwd_name: Option<Vec::<u8>>,
+    //用于本次会话的密码
+    pub password: Option<Vec::<u8>>,
+    //用于产生PWE的会话随机数
+    pub randoms:  Option<SessionRandoms>,
+    // PWE元素
     pub password_element: Option<BigInt>,
+    // 随机产生的PrivMask元素对
     pub private_mask: Option<PrivateMask>,
+    // 发送给对方的Commit元素
     pub commit_element: Option<CommitElement>,
+    // 从对方接收的Commit元素
     pub peer_commit_element: Option<CommitElement>,
+    // 运算过程中产生的机密元素
     pub secret: Option<Secret>
 }
 
@@ -66,6 +73,7 @@ pub struct DragonflyOp<'a> {
 impl Default for DragonflyOp<'static> {
     fn default() -> Self {
         Self {
+           pwd_name: None,
            password: None,
            ffc_elemnt: FFCElement::default(),
            randoms: None,
@@ -84,7 +92,7 @@ impl Default for DragonflyOp<'static> {
 impl<'a>  DragonflyOp<'a> {
     // pub fn initiate(self: &Self,local_password: &[u8],client_random: &[u8],server_random: &[u8]) -> Result<BigInt> {
     pub fn initiate(self: &mut Self) -> Result<()> {
-        let input_randoms: &proto::Randoms =   Self::handle_option(&self.randoms)?;
+        let input_randoms: &proto::SessionRandoms =   Self::handle_option(&self.randoms)?;
         let client_random: &[u8] = input_randoms.client_random.as_ref();
         let server_random: &[u8] =  input_randoms.server_random.as_ref();
         let local_password =  Self::handle_option(&self.password)?;

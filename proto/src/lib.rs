@@ -1,9 +1,10 @@
 pub enum Command {
-    SetPassword,
+    InitMemUserPassword,
     InitPWE,
     ComputeSharedSecret,
     ConfirmExchange,
     GeneRandom,
+    LoadDevUserPassword,
     Unknown,
 }
 
@@ -11,11 +12,12 @@ impl From<u32> for Command {
     #[inline]
     fn from(value: u32) -> Command {
         match value {
-            0 => Command::SetPassword,
+            0 => Command::InitMemUserPassword,
             1 => Command::InitPWE,
             2 => Command::ComputeSharedSecret,
             3 => Command::ConfirmExchange,
             4 => Command::GeneRandom,
+            5 => Command::LoadDevUserPassword,
             _ => Command::Unknown,
         }
     }
@@ -27,13 +29,20 @@ use serde::{Serialize, Deserialize};
 pub use serde_json;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Password {
-    pub pw: Vec::<u8>
+pub struct InitMemUserPasswordReq {
+    pub pwd_name: Vec::<u8>,
+    pub pw: Vec::<u8>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LoadDevUserPasswprdReq {
+    pub pwd_name: Vec::<u8>,
 }
 
 
+
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Randoms {
+pub struct SessionRandoms {
     pub client_random: Vec::<u8>,
     pub server_random: Vec::<u8>,
 }

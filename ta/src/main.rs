@@ -9,12 +9,16 @@ use proto::{Command,self};
 
 mod modular;
 use modular::DragonflyOp;
+use modular::password;
 
 
 
 
 #[ta_create]
 fn create() -> Result<()> {
+    // 初始化根账号密码
+    password::init_root_password()?;
+
     trace_println!("[+] TA create");
     Ok(())
 }
@@ -41,11 +45,12 @@ fn destroy() {
 fn invoke_command( sess_ctx: &mut DragonflyOp,cmd_id: u32, params: &mut Parameters) -> Result<()> {
     trace_println!("[+] TA invoke command");
     match Command::from(cmd_id) {
-        Command::SetPassword => modular::set_password(sess_ctx,params),
+        Command::InitMemUserPassword => modular::init_mem_user_password(sess_ctx,params),
         Command::InitPWE => modular::init_pwe(sess_ctx,params),
         Command::ComputeSharedSecret => modular::compute_shared_secret(sess_ctx,params),
         Command::ConfirmExchange => modular::confirm_exchange(sess_ctx,params),
         Command::GeneRandom => modular::gene_random(sess_ctx,params),
+        Command::LoadDevUserPassword => modular::load_dev_user_password(sess_ctx,params),
         _ => Err(Error::new(ErrorKind::BadParameters)),
     }
     
