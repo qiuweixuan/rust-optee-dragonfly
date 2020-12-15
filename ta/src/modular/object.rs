@@ -1,5 +1,5 @@
 use optee_utee::{DataFlag, ObjectStorageConstants, PersistentObject};
-use optee_utee::{Error, ErrorKind, Parameters, Result};
+use optee_utee::{Error, ErrorKind, Result};
 
 pub fn delete_object(obj_id: &mut [u8]) -> Result<()> {
 

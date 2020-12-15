@@ -51,6 +51,7 @@ fn invoke_command( sess_ctx: &mut DragonflyOp,cmd_id: u32, params: &mut Paramete
         Command::ConfirmExchange => modular::confirm_exchange(sess_ctx,params),
         Command::GeneRandom => modular::gene_random(sess_ctx,params),
         Command::LoadDevUserPassword => modular::load_dev_user_password(sess_ctx,params),
+        Command::InitNamedGroup => modular::init_named_group(sess_ctx,params),
         _ => Err(Error::new(ErrorKind::BadParameters)),
     }
     

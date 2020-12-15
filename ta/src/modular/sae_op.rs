@@ -32,13 +32,12 @@ pub fn init_mem_user_password(op: &mut DragonflyOp,params: &mut Parameters)-> Re
 pub fn load_dev_user_password(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
     let mut p0 = unsafe { params.0.as_memref().unwrap()};
 
-    let mut req: proto::LoadDevUserPasswprdReq =  match proto::serde_json::from_slice(p0.buffer()){
+    let mut req: proto::LoadDevUserPasswordReq =  match proto::serde_json::from_slice(p0.buffer()){
         Ok(res) =>res,
         Err(_e) => return Err(Error::new(ErrorKind::BadParameters))
     };
-    trace_println!("LoadDevUserPasswprdReq: {:02x?}",req);
+    trace_println!("LoadDevUserPasswordReq: {:02x?}",req);
 
-    let is_load = true;
     let pw = password::read_password(&mut req.pwd_name)?;
 
     op.pwd_name = Some(req.pwd_name);
@@ -46,6 +45,24 @@ pub fn load_dev_user_password(op: &mut DragonflyOp,params: &mut Parameters)-> Re
 
     Ok(())
 }
+
+
+pub fn init_named_group(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
+    let mut p0 = unsafe { params.0.as_memref().unwrap()};
+
+    let req: proto::InitNamedGroupReq =  match proto::serde_json::from_slice(p0.buffer()){
+        Ok(res) =>res,
+        Err(_e) => return Err(Error::new(ErrorKind::BadParameters))
+    };
+    trace_println!("InitNamedGroupReq: {:02x?}",req);
+
+    op.ffc_elemnt.set_group(req.group_code)?;
+
+    Ok(())
+}
+
+
+
 
 pub fn init_pwe(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
     let mut p0 = unsafe { params.0.as_memref().unwrap()};
@@ -75,7 +92,7 @@ pub fn init_pwe(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
 
    
     let output_vec = proto::serde_json::to_vec(&output).unwrap();
-    trace_println!("sizeof out: {:?} ", output_vec.len());
+    // trace_println!("sizeof out: {:?} ", output_vec.len());
     
     p1.buffer().write(&output_vec).unwrap();
     p1.set_updated_size(output_vec.len());
@@ -121,7 +138,7 @@ pub fn compute_shared_secret(op: &mut DragonflyOp,params: &mut Parameters)-> Res
 
 pub fn confirm_exchange(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
     let mut p0 = unsafe { params.0.as_memref().unwrap()};
-    // let mut p1 = unsafe { params.1.as_memref().unwrap()};
+    let mut p1 = unsafe { params.1.as_memref().unwrap()};
 
     let proto_token: proto::Token = match proto::serde_json::from_slice(p0.buffer()){
         Ok(res) => res,
@@ -129,23 +146,25 @@ pub fn confirm_exchange(op: &mut DragonflyOp,params: &mut Parameters)-> Result<(
     };
 
     let peer_token = &proto_token.token;
+    // 确认握手过程是否成功
+    let is_confirm = op.confirm_exchange(peer_token)?;
 
-    op.confirm_exchange(peer_token)?;
+    let serect = match &op.secret{
+        Some(res) => res,
+        None => return Err(Error::new(ErrorKind::BadParameters))
+    };
+    let pmk = match is_confirm{
+        true => serect.pmk.clone(),
+        false => Vec::<u8>::new()
+    };
 
-
-    // let serect = match &op.secret{
-    //     Some(res) => res,
-    //     None => return Err(Error::new(ErrorKind::BadParameters))
-    // };
-
-
-    // let output = proto::Token{
-    //     token: serect.token.clone()
-    // };
-    // let output_vec = proto::serde_json::to_vec(&output).unwrap();
-    // // trace_println!("sizeof out: {:?} ", output_vec.len());
-    // p1.buffer().write(&output_vec).unwrap();
-    // p1.set_updated_size(output_vec.len());
+    let output = proto::HandshakePMK{
+        is_confirm,
+        pmk,
+    };
+    let output_vec = proto::serde_json::to_vec(&output).unwrap();
+    p1.buffer().write(&output_vec).unwrap();
+    p1.set_updated_size(output_vec.len());
 
     Ok(())
 }

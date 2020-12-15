@@ -5,6 +5,7 @@ pub enum Command {
     ConfirmExchange,
     GeneRandom,
     LoadDevUserPassword,
+    InitNamedGroup,
     Unknown,
 }
 
@@ -18,6 +19,7 @@ impl From<u32> for Command {
             3 => Command::ConfirmExchange,
             4 => Command::GeneRandom,
             5 => Command::LoadDevUserPassword,
+            6 => Command::InitNamedGroup,
             _ => Command::Unknown,
         }
     }
@@ -35,11 +37,14 @@ pub struct InitMemUserPasswordReq {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct LoadDevUserPasswprdReq {
+pub struct LoadDevUserPasswordReq {
     pub pwd_name: Vec::<u8>,
 }
 
-
+#[derive(Serialize, Deserialize, Debug)]
+pub struct InitNamedGroupReq {
+    pub group_code: u16,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SessionRandoms {
@@ -58,6 +63,14 @@ pub struct CommitElement {
 pub struct Token {
     pub token: Vec::<u8>
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct HandshakePMK {
+    pub pmk: Vec::<u8>,
+    pub is_confirm: bool,
+}
+
+
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GeneRandomReq {

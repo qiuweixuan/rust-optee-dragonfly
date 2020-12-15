@@ -129,7 +129,7 @@ impl<'a>  DragonflyOp<'a> {
 
             // temp = seed ^ ((prime - 1) / order) mod prime
 
-            let exp = match self.ffc_elemnt.is_safe_prime {
+            let exp = match self.ffc_elemnt.is_safe_prime() {
                 true =>{
                     /*
                     * exp = (prime - 1) / 2 for the group used here, so this becomes:
@@ -298,7 +298,7 @@ impl<'a>  DragonflyOp<'a> {
     }
 
 
-    pub fn confirm_exchange(self: &Self,peer_token: &[u8]) -> Result<()> {
+    pub fn confirm_exchange(self: &Self,peer_token: &[u8]) -> Result<bool> {
         let commit_element: &CommitElement =  Self::handle_option(&self.commit_element)?;
         let scalar: &BigInt =  &commit_element.scalar;
         let element: &BigInt =  &commit_element.element;
@@ -324,7 +324,12 @@ impl<'a>  DragonflyOp<'a> {
         trace_println!(" Computed Token from Peer = {:02x?} \n", &peer_token_computed);
         trace_println!(" Received Token from Peer = {:02x?} \n", &peer_token);
 
-        Ok(())
+        // 确认握手是否成功
+        let is_handshake_confirm = peer_token.to_vec() == peer_token_computed;
+        trace_println!("Handshake Confirm is  {:02x?} \n", is_handshake_confirm);
+
+
+        Ok(is_handshake_confirm)
      }  
 
 
@@ -356,7 +361,7 @@ impl<'a>  DragonflyOp<'a> {
 
 
     fn compute_password_key(self: &Self,password_base: &[u8],label_str: &[u8],key_bits: u32) -> Result<(BigInt)> {
-        let result_key = Self::sha256_prf_bits(password_base,label_str,self.ffc_elemnt.prime_gp_array,key_bits)?;
+        let result_key = Self::sha256_prf_bits(password_base,label_str,self.ffc_elemnt.prime_gp_array(),key_bits)?;
         trace_println!("len:{},result_key:{:02x?}",result_key.len(),result_key);
         
         let bigint_result = gp_bigint::bigint_construct_from_gpstr(&result_key)?;
