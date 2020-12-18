@@ -1,18 +1,12 @@
-use optee_teec::{Context, Uuid};
-use proto::{UUID,self};
-use sae_core::dragonfly;
+use sae_core::{session_example};
 
 fn main() -> optee_teec::Result<()> {
-    let mut ctx = Context::new()?;
-    let uuid = Uuid::parse_str(UUID).unwrap();
-    let mut session = ctx.open_session(uuid)?;
+    println!("Success Example:");
+    session_example::sae_success_example()?;
 
-    let mut ctx = Context::new()?;
-    let uuid = Uuid::parse_str(UUID).unwrap();
-    let mut peer_session = ctx.open_session(uuid)?;
+    println!("Fail Example:");
+    session_example::sae_fail_example()?;
 
-    dragonfly(&mut session,&mut peer_session)?;
-
-    println!("Success");
+    
     Ok(())
 }

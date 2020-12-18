@@ -46,8 +46,8 @@ fn invoke_command( sess_ctx: &mut DragonflyOp,cmd_id: u32, params: &mut Paramete
     trace_println!("[+] TA invoke command");
     match Command::from(cmd_id) {
         Command::InitMemUserPassword => modular::init_mem_user_password(sess_ctx,params),
-        Command::InitPWE => modular::init_pwe(sess_ctx,params),
-        Command::ComputeSharedSecret => modular::compute_shared_secret(sess_ctx,params),
+        Command::ComputeCommitElement => modular::compute_commit_element(sess_ctx,params),
+        Command::ComputeConfirmElement => modular::compute_shared_secret(sess_ctx,params),
         Command::ConfirmExchange => modular::confirm_exchange(sess_ctx,params),
         Command::GeneRandom => modular::gene_random(sess_ctx,params),
         Command::LoadDevUserPassword => modular::load_dev_user_password(sess_ctx,params),

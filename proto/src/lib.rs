@@ -1,7 +1,7 @@
 pub enum Command {
     InitMemUserPassword,
-    InitPWE,
-    ComputeSharedSecret,
+    ComputeCommitElement,
+    ComputeConfirmElement,
     ConfirmExchange,
     GeneRandom,
     LoadDevUserPassword,
@@ -14,8 +14,8 @@ impl From<u32> for Command {
     fn from(value: u32) -> Command {
         match value {
             0 => Command::InitMemUserPassword,
-            1 => Command::InitPWE,
-            2 => Command::ComputeSharedSecret,
+            1 => Command::ComputeCommitElement,
+            2 => Command::ComputeConfirmElement,
             3 => Command::ConfirmExchange,
             4 => Command::GeneRandom,
             5 => Command::LoadDevUserPassword,

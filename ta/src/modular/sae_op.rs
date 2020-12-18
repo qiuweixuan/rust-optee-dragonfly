@@ -64,7 +64,7 @@ pub fn init_named_group(op: &mut DragonflyOp,params: &mut Parameters)-> Result<(
 
 
 
-pub fn init_pwe(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
+pub fn compute_commit_element(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
     let mut p0 = unsafe { params.0.as_memref().unwrap()};
     let mut p1 = unsafe { params.1.as_memref().unwrap()};
 
