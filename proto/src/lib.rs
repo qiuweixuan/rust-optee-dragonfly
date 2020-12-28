@@ -6,6 +6,10 @@ pub enum Command {
     GeneRandom,
     LoadDevUserPassword,
     InitNamedGroup,
+    ClientRemotePwdManage,
+    EncReq,
+    DecRes,
+    TermialPwdManage,
     Unknown,
 }
 
@@ -20,6 +24,10 @@ impl From<u32> for Command {
             4 => Command::GeneRandom,
             5 => Command::LoadDevUserPassword,
             6 => Command::InitNamedGroup,
+            7 => Command::ClientRemotePwdManage,
+            8 => Command::EncReq,
+            9 => Command::DecRes,
+            10 => Command::TermialPwdManage,
             _ => Command::Unknown,
         }
     }
@@ -82,3 +90,53 @@ pub struct GeneRandomRes {
     pub rand: Vec::<u8>
 }
 
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum RemotePwdManageReq {
+    /// Get the value of key.
+    Get {
+        /// Name of key to get
+        key: Vec::<u8>,
+    },
+    /// Set key to hold the string value.
+    Set {
+        /// Name of key to set
+        key: Vec::<u8>,
+
+        /// Value to set.
+        value: Vec::<u8>,
+    },
+    /// Del the value of key.
+    Del {
+        /// Name of key to del
+        key: Vec::<u8>,
+    },
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum RemotePwdManageRes {
+    /// Get the value of key.
+    Get {
+        /// the value of key.
+        value: Vec::<u8>,
+        /// Command is success
+        is_success: bool,
+    },
+    /// Set key to hold the string value.
+    Set {
+        /// Command is success
+        is_success: bool,
+    },
+    /// Del the value of key.
+    Del {
+        /// Command is success
+        is_success: bool,
+    },
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CipherTaLoad {
+    pub cipher: Vec::<u8>,
+    pub hash: Vec::<u8>,
+    pub iv: Vec::<u8>,
+}

@@ -52,6 +52,10 @@ fn invoke_command( sess_ctx: &mut DragonflyOp,cmd_id: u32, params: &mut Paramete
         Command::GeneRandom => modular::gene_random(sess_ctx,params),
         Command::LoadDevUserPassword => modular::load_dev_user_password(sess_ctx,params),
         Command::InitNamedGroup => modular::init_named_group(sess_ctx,params),
+        Command::ClientRemotePwdManage => modular::client_remote_pwd_manage(sess_ctx,params),
+        Command::EncReq => modular::enc_req(sess_ctx,params),
+        Command::DecRes => modular::dec_res(sess_ctx,params),
+        Command::TermialPwdManage => modular::termial_pwd_manage(sess_ctx,params),
         _ => Err(Error::new(ErrorKind::BadParameters)),
     }
     
@@ -59,7 +63,8 @@ fn invoke_command( sess_ctx: &mut DragonflyOp,cmd_id: u32, params: &mut Paramete
 
 // TA configurations
 const TA_FLAGS: u32 = 0;
-const TA_DATA_SIZE: u32 = 32 * 1024 * 4;
+// const TA_DATA_SIZE: u32 = 32 * 1024 * 4;
+const TA_DATA_SIZE: u32 = 1 * 1024 * 1024;
 const TA_STACK_SIZE: u32 = 2 * 1024 * 4;
 const TA_VERSION: &[u8] = b"0.1\0";
 const TA_DESCRIPTION: &[u8] = b"SAE Core Lib using RUST-OPTEE APIs.\0";

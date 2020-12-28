@@ -117,6 +117,58 @@ impl<'a> SaeCaContext<'a> {
         };
         serde_invoke_command_req_res(&mut self.session, &mut self.output_buffer, Command::ConfirmExchange, &input)
     }
+
+    /* GetRemotePwd */
+    pub fn get_remote_pwd_req(self: &mut Self, key :&[u8]) -> Result<proto::CipherTaLoad> {
+        let input : proto::RemotePwdManageReq = proto::RemotePwdManageReq::Get {
+            key: key.to_owned(),
+        };
+        serde_invoke_command_req_res(&mut self.session, &mut self.output_buffer, Command::EncReq, &input)
+    }
+
+    /* SetRemotePwd */
+    pub fn set_remote_pwd_req(self: &mut Self, key :&[u8],value :&[u8]) -> Result<proto::CipherTaLoad> {
+        let input : proto::RemotePwdManageReq = proto::RemotePwdManageReq::Set {
+            key: key.to_owned(),
+            value: value.to_owned(),
+        };
+        serde_invoke_command_req_res(&mut self.session, &mut self.output_buffer, Command::EncReq, &input)
+    }
+
+     /* DelRemotePwd */
+     pub fn del_remote_pwd_req(self: &mut Self, key :&[u8]) -> Result<proto::CipherTaLoad> {
+        let input : proto::RemotePwdManageReq = proto::RemotePwdManageReq::Del {
+            key: key.to_owned(),
+        };
+        serde_invoke_command_req_res(&mut self.session, &mut self.output_buffer, Command::EncReq, &input)
+    }
+
+    /* TermialPwdManage */
+    pub fn termial_pwd_manage(self: &mut Self, cipher_req: &proto::CipherTaLoad) -> Result<proto::CipherTaLoad> {
+        serde_invoke_command_req_res(&mut self.session, &mut self.output_buffer, Command::TermialPwdManage, cipher_req)
+    }
+
+    /* DecRemotePwdRes */
+    pub fn remote_pwd_res(self: &mut Self, cipher_res: &proto::CipherTaLoad) -> Result<proto::RemotePwdManageRes> {
+        serde_invoke_command_req_res(&mut self.session, &mut self.output_buffer, Command::DecRes, cipher_res)
+    }
+
+
+
+    /* GetRemotePwd */
+    /* pub fn get_remote_pwd_encdec(self: &mut Self, key :&[u8]) -> Result<proto::RemotePwdManageRes> {
+        let input : proto::RemotePwdManageReq = proto::RemotePwdManageReq::Get {
+            key: key.to_owned(),
+        };
+        let middle_result : proto::CipherTaLoad  = 
+            serde_invoke_command_req_res(&mut self.session, &mut self.output_buffer, Command::EncReq, &input)?;
+        let middle_result : proto::CipherTaLoad = 
+            serde_invoke_command_req_res(&mut self.session, &mut self.output_buffer, Command::TermialPwdManage, &middle_result)?;
+        let result : proto::RemotePwdManageRes = 
+            serde_invoke_command_req_res(&mut self.session, &mut self.output_buffer, Command::DecRes, &middle_result)?;
+        return Ok(result);
+    } */
+
 }
 
 fn serde_invoke_command_req_res<'a, T: Serialize, U: Deserialize<'a>>(

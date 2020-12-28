@@ -7,7 +7,7 @@ use optee_utee::{
 };
 
 use optee_utee::{Result};
-use optee_utee::{AlgorithmId, Digest,Mac};
+use optee_utee::{AlgorithmId, Digest,Mac,Cipher,OperationMode};
 use optee_utee::{AttributeId, AttributeMemref, TransientObject, TransientObjectType};
 use optee_utee::{Random};
 
@@ -15,14 +15,8 @@ use optee_utee::{Error, ErrorKind};
 
 use super::gp_bigint;
 use super::ffc_op::{FFCElement};
+use super::crypt_op;
 use proto::{SessionRandoms};
-
-// use std::{cmp};
-
-
-struct DigestOp {
-    op: Digest,
-}
 
 
 
@@ -253,7 +247,7 @@ impl<'a>  DragonflyOp<'a> {
         trace_println!("ss_hex:\n {:02x?}", &ss_hex);
 
         let mut keyseed = [0u8;32];
-        Self::hmac_sha256(&nullkey,&ss_hex,&mut keyseed)?;
+        crypt_op::hmac_sha256(&nullkey,&ss_hex,&mut keyseed)?;
         trace_println!("keyseed:\n {:02x?}", &keyseed);
 
 
@@ -283,7 +277,7 @@ impl<'a>  DragonflyOp<'a> {
         token_message.extend(&peer_element.convert_to_octet_string()?);
         
         let mut token = vec![0u8;32];
-        Self::hmac_sha256(&kck,&token_message,&mut token)?;
+        crypt_op::hmac_sha256(&kck,&token_message,&mut token)?;
         trace_println!("token:\n {:02x?}", &token);
         
         self.secret = Some(Secret{
@@ -319,7 +313,7 @@ impl<'a>  DragonflyOp<'a> {
         peer_message.extend(&element.convert_to_octet_string()?);
     
         let mut peer_token_computed = vec![0u8;32];
-        Self::hmac_sha256(&kck,&peer_message,&mut peer_token_computed)?;
+        crypt_op::hmac_sha256(&kck,&peer_message,&mut peer_token_computed)?;
 
         trace_println!(" Computed Token from Peer = {:02x?} \n", &peer_token_computed);
         trace_println!(" Received Token from Peer = {:02x?} \n", &peer_token);
@@ -353,7 +347,7 @@ impl<'a>  DragonflyOp<'a> {
         
     
         let mut hashed_password: [u8; 32] = [0u8; 32];
-        Self::hmac_sha256(&key,&message,&mut hashed_password)?;
+        crypt_op::hmac_sha256(&key,&message,&mut hashed_password)?;
 
         trace_println!("digest:{:02x?}",hashed_password);
         Ok(hashed_password)
@@ -401,7 +395,7 @@ impl<'a>  DragonflyOp<'a> {
             handle_message.extend(&count_u8_array);
             handle_message.extend(&message);
 
-            Self::hmac_sha256(&key,&handle_message,&mut out_digest)?;
+            crypt_op::hmac_sha256(&key,&handle_message,&mut out_digest)?;
             result_buf.extend(&out_digest[0..message_len]);
         
             pos += message_len;
@@ -412,48 +406,35 @@ impl<'a>  DragonflyOp<'a> {
     }
 
 
-    fn hmac_sha256(input_key: &[u8], data: &[u8],out: &mut [u8]) -> Result<usize> {
-        const MAX_KEY_SIZE: usize = 128;
-        const MIN_KEY_SIZE: usize = 24;
 
-        let mut key :Vec<u8> = Vec::new();
-        key.extend(input_key);
-
-        if key.len() < MIN_KEY_SIZE {
-            key.extend(vec![0u8;MIN_KEY_SIZE - key.len()]);
-        }
-        if key.len() > MAX_KEY_SIZE {
-            let sha256_op = DigestOp{op:Digest::allocate(AlgorithmId::Sha256).unwrap()};
-            sha256_op.op.do_final(&input_key,&mut key).unwrap();
-        }
-
-        match Mac::allocate(AlgorithmId::HmacSha256, key.len() * 8) {
-            Err(e) => return Err(e),
-            Ok(mac) => {
-                match TransientObject::allocate(TransientObjectType::HmacSha256, key.len() * 8) {
-                    Err(e) => return Err(e),
-                    Ok(mut key_object) => {
-                        //KEY size can be larger than hotp.key_len
-                        let mut tmp_key = key.to_vec();
-                        tmp_key.truncate(key.len());
-                        let attr = AttributeMemref::from_ref(AttributeId::SecretValue, &tmp_key);
-                        key_object.populate(&[attr.into()])?;
-                        mac.set_key(&key_object)?;
-                    }
-                }
-                mac.init(&[0u8; 0]);
-                mac.update(&data);
-                let out_len = mac.compute_final(&[0u8; 0], out).unwrap();
-                Ok(out_len)
-            }
-        }
-    }
-
-    fn handle_option<'b,T>(v: &'b Option<T>) -> Result<&'b T>{
+    pub fn handle_option<'b,T>(v: &'b Option<T>) -> Result<&'b T>{
         match v{
             Some(res) => Ok(res),
             None => return Err(Error::new(ErrorKind::BadParameters))
         }
+    }
+
+    pub fn aes_ctr_256(self: &Self) -> Result<()> {
+
+        const AES_TEST_BUFFER_SIZE: usize = 1000;
+        // const AES_TEST_KEY_SIZE: usize = 32;
+        const AES_TEST_IV_SIZE: usize = 16;
+
+        let secret: &Secret =  Self::handle_option(&self.secret)?;
+        let key: &[u8] =  &secret.kck;
+
+        // let key = vec![0xa5u8; AES_TEST_KEY_SIZE];   
+        let iv = vec![0x00u8; AES_TEST_IV_SIZE];
+        let text = vec![0x5au8; AES_TEST_BUFFER_SIZE];
+
+        let ciph = crypt_op::aes_ctr_256_enc(key, &iv, &text)?;
+        let plain = crypt_op::aes_ctr_256_dec(key, &iv, &ciph)?;
+
+        // 确认加解密是否成功
+        let is_confirm = text == plain;
+        trace_println!("Enc Dec is  {} \n", is_confirm);
+
+        Ok(())  
     }
 
 }

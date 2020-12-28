@@ -9,8 +9,9 @@ use proto;
 use super::dragonfly_op::{self,DragonflyOp};
 use super::gp_bigint;
 use super::password;
+use super::crypt_op;
 use std::io::Write;
-// use std::mem;
+
 
 
 pub fn init_mem_user_password(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
@@ -38,7 +39,7 @@ pub fn load_dev_user_password(op: &mut DragonflyOp,params: &mut Parameters)-> Re
     };
     trace_println!("LoadDevUserPasswordReq: {:02x?}",req);
 
-    let pw = password::read_password(&mut req.pwd_name)?;
+    let pw = password::read_password(&req.pwd_name)?;
 
     op.pwd_name = Some(req.pwd_name);
     op.password = Some(pw);
@@ -166,6 +167,9 @@ pub fn confirm_exchange(op: &mut DragonflyOp,params: &mut Parameters)-> Result<(
     p1.buffer().write(&output_vec).unwrap();
     p1.set_updated_size(output_vec.len());
 
+    // 进行测试
+    op.aes_ctr_256()?;
+
     Ok(())
 }
 
@@ -193,3 +197,228 @@ pub fn gene_random(_op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
 
     Ok(())
 }
+
+pub fn client_remote_pwd_manage(_op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
+    let mut p0 = unsafe { params.0.as_memref().unwrap()};
+    let mut p1 = unsafe { params.1.as_memref().unwrap()};   
+
+    let req: proto::RemotePwdManageReq = match proto::serde_json::from_slice(p0.buffer()){
+        Ok(res) => res,
+        Err(_e) => return Err(Error::new(ErrorKind::BadParameters))
+    };
+
+    
+    let output : proto::RemotePwdManageRes  = match req{
+        proto::RemotePwdManageReq::Get{ key } => {
+            let mut value = Vec::<u8>::new();
+            let mut is_success = true;
+            let result = password::read_password(&key);
+            match result {
+                Err(_) => is_success = false,
+                Ok(pwd) => value = pwd,
+            };
+            proto::RemotePwdManageRes::Get{
+                value,
+                is_success,
+            }
+        },
+        proto::RemotePwdManageReq::Set{key,value} => {
+            let is_success = password::write_password(&key,&value).is_ok();
+            proto::RemotePwdManageRes::Set{
+                is_success,
+            }
+        },
+        proto::RemotePwdManageReq::Del{key} => {
+            let is_success = password::del_password(&key).is_ok();
+            proto::RemotePwdManageRes::Del{
+                is_success,
+            }
+        },
+    };
+    
+
+   /*  let output : proto::RemotePwdManageRes  = proto::RemotePwdManageRes::Get{
+        value: "abcdefg".to_owned(),
+        is_success: true,
+    }; */
+    let output_vec = proto::serde_json::to_vec(&output).unwrap();
+    p1.buffer().write(&output_vec).unwrap();
+    p1.set_updated_size(output_vec.len());
+
+    Ok(())
+}
+
+/* EncReq */
+pub fn enc_req(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
+
+    
+    let mut p0 = unsafe { params.0.as_memref().unwrap()};
+    let mut p1 = unsafe { params.1.as_memref().unwrap()};   
+
+    // 获取key
+    /* let secret  =  DragonflyOp::handle_option(&op.secret)?;
+    let key: &[u8] =  &secret.kck; */
+    let key = &vec![0xa5u8; 32];  
+    
+
+    // 获取iv
+    let iv = vec![0x00u8; 16];
+
+    // 获取密文
+    let cipher = crypt_op::aes_ctr_256_enc(key, &iv, p0.buffer())?;
+
+    // 获取哈希值
+    let mut hash = vec![0u8;32];
+    crypt_op::hmac_sha256(&key,&cipher,&mut hash)?;
+
+    // 组装成加密对象
+    let output = proto::CipherTaLoad{
+        cipher,
+        hash,
+        iv,
+    };
+
+    let output_vec = proto::serde_json::to_vec(&output).unwrap();
+    p1.buffer().write(&output_vec).unwrap();
+    p1.set_updated_size(output_vec.len());
+
+    Ok(())
+}
+
+
+/* DecRes */
+pub fn dec_res(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
+    let mut p0 = unsafe { params.0.as_memref().unwrap()};
+    let mut p1 = unsafe { params.1.as_memref().unwrap()};   
+
+    let req: proto::CipherTaLoad = match proto::serde_json::from_slice(p0.buffer()){
+        Ok(res) => res,
+        Err(_) => return Err(Error::new(ErrorKind::BadParameters))
+    };
+
+    // 获取key
+    // let secret =  DragonflyOp::handle_option(&op.secret)?;
+    // let key: &[u8] =  &secret.kck;
+    let key = &vec![0xa5u8; 32];  
+
+    // 获取iv
+    let iv = req.iv;
+
+    // 计算哈希值
+    let mut compute_hash = vec![0u8;32];
+    crypt_op::hmac_sha256(&key,&req.cipher,&mut compute_hash)?;
+    // 哈希值不同，出现错误
+    if compute_hash != req.hash {
+        return Err(Error::new(ErrorKind::BadParameters));
+    }
+
+    // 获取明文
+    let plain = crypt_op::aes_ctr_256_dec(key, &iv, &req.cipher)?;
+
+    // 获取响应
+    let output_vec = plain;
+    p1.buffer().write(&output_vec).unwrap();
+    p1.set_updated_size(output_vec.len());
+
+    Ok(())
+}
+
+/* TermialPwdManage */
+pub fn termial_pwd_manage(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
+    let mut p0 = unsafe { params.0.as_memref().unwrap()};
+    let mut p1 = unsafe { params.1.as_memref().unwrap()};   
+
+    let req: proto::CipherTaLoad = match proto::serde_json::from_slice(p0.buffer()){
+        Ok(res) => res,
+        Err(_) => return Err(Error::new(ErrorKind::BadParameters))
+    };
+
+    // 获取key
+    // let secret =  DragonflyOp::handle_option(&op.secret)?;
+    // let key: &[u8] =  &secret.kck;
+    let key = &vec![0xa5u8; 32];  
+
+    // 获取iv
+    let iv = req.iv;
+
+    // 计算哈希值
+    let mut compute_hash = vec![0u8;32];
+    crypt_op::hmac_sha256(&key,&req.cipher,&mut compute_hash)?;
+    // 哈希值不同，出现错误
+    if compute_hash != req.hash {
+        return Err(Error::new(ErrorKind::BadParameters));
+    }
+
+    // 获取明文
+    let plain = crypt_op::aes_ctr_256_dec(key, &iv, &req.cipher)?;
+
+    // 获取解密后的请求
+    let req: proto::RemotePwdManageReq = match proto::serde_json::from_slice(&plain){
+        Ok(res) => res,
+        Err(_e) => return Err(Error::new(ErrorKind::BadParameters))
+    };
+
+    // 处理明文请求, 获取明文响应
+    let res : proto::RemotePwdManageRes  = match req{
+        proto::RemotePwdManageReq::Get{ key } => {
+            let mut value = Vec::<u8>::new();
+            let mut is_success = true;
+            let result = password::read_password(&key);
+            match result {
+                Err(_) => is_success = false,
+                Ok(pwd) => value = pwd,
+            };
+            proto::RemotePwdManageRes::Get{
+                value,
+                is_success,
+            }
+        },
+        proto::RemotePwdManageReq::Set{key,value} => {
+            let is_success = password::write_password(&key,&value).is_ok();
+            proto::RemotePwdManageRes::Set{
+                is_success,
+            }
+        },
+        proto::RemotePwdManageReq::Del{key} => {
+            let is_success = password::del_password(&key).is_ok();
+            proto::RemotePwdManageRes::Del{
+                is_success,
+            }
+        },
+    };
+
+    // 获取明文响应序列化向量
+    let res_vec = proto::serde_json::to_vec(&res).unwrap();
+
+    // 获取iv
+    let iv = vec![0x00u8; 16];
+
+    // 获取密文
+    let cipher = crypt_op::aes_ctr_256_enc(key, &iv, &res_vec)?;
+
+    // 获取哈希值
+    let mut hash = vec![0u8;32];
+    crypt_op::hmac_sha256(&key,&cipher,&mut hash)?;
+
+    // 组装加密对象
+    let output = proto::CipherTaLoad{
+        cipher,
+        hash,
+        iv,
+    };
+
+    let output_vec = proto::serde_json::to_vec(&output).unwrap();
+    p1.buffer().write(&output_vec).unwrap();
+    p1.set_updated_size(output_vec.len());
+    Ok(())
+}
+
+
+
+
+
+
+
+
+
+

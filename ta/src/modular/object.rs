@@ -1,7 +1,7 @@
 use optee_utee::{DataFlag, ObjectStorageConstants, PersistentObject};
 use optee_utee::{Error, ErrorKind, Result};
 
-pub fn delete_object(obj_id: &mut [u8]) -> Result<()> {
+pub fn delete_object(obj_id: &[u8]) -> Result<()> {
 
     match PersistentObject::open(
         ObjectStorageConstants::Private,
@@ -20,7 +20,7 @@ pub fn delete_object(obj_id: &mut [u8]) -> Result<()> {
     }
 }
 
-pub fn create_raw_object(obj_id: &mut [u8],obj_buf: &mut [u8]) -> Result<()> {
+pub fn create_raw_object(obj_id: &[u8],obj_buf: &[u8]) -> Result<()> {
 
     let obj_data_flag = DataFlag::ACCESS_READ
         | DataFlag::ACCESS_WRITE
@@ -52,7 +52,7 @@ pub fn create_raw_object(obj_id: &mut [u8],obj_buf: &mut [u8]) -> Result<()> {
     }
 }
 
-pub fn read_raw_object(obj_id: &mut [u8],obj_buf: &mut [u8]) -> Result<u32> {
+pub fn read_raw_object(obj_id: &[u8],obj_buf: &mut [u8]) -> Result<u32> {
     
     match PersistentObject::open(
         ObjectStorageConstants::Private,
@@ -79,7 +79,22 @@ pub fn read_raw_object(obj_id: &mut [u8],obj_buf: &mut [u8]) -> Result<u32> {
     }
 }
 
-pub fn exist_raw_object(obj_id: &mut [u8]) -> Result<()> {
+pub fn write_raw_object(obj_id: &[u8],obj_buf: &[u8]) -> Result<()> {
+    match PersistentObject::open (
+            ObjectStorageConstants::Private,
+            &obj_id,
+            DataFlag::ACCESS_WRITE) {
+                Ok(mut object) =>
+                {
+                    object.truncate(0u32)?;
+                    object.write(&obj_buf)?;
+                    Ok(())
+                }
+                Err(e) => Err(e),
+    }
+}
+
+pub fn exist_raw_object(obj_id: &[u8]) -> Result<()> {
     
     match PersistentObject::open(
         ObjectStorageConstants::Private,
