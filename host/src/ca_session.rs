@@ -25,7 +25,6 @@ impl<'a> SaeCaContext<'a> {
         let uuid = Uuid::parse_str(UUID).map_err(convert_error_fn(ErrorKind::BadParameters))?;
         let session = ctx.open_session(uuid)?;
         let output_buffer = vec![0u8; 16384];
-        println!("Create SaeCaContext");
         Ok(Self {
             session,
             output_buffer,
