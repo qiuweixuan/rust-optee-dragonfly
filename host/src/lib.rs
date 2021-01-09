@@ -3,3 +3,4 @@ pub mod session_example;
 
 pub use ca_session::{dragonfly};
 pub use ca_session::SaeCaContext;
+pub use proto::RemotePwdManageRes;

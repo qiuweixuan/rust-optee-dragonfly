@@ -23,7 +23,7 @@ pub fn sae_fail_example() -> optee_teec::Result<()>{
 }
 
 
-fn sae_test(pwd_name: &[u8], sta_pw: &[u8] , ap_pw : &[u8], rand_bytes: usize,assert_is_success: bool) -> optee_teec::Result<()> {
+pub fn sae_test(pwd_name: &[u8], sta_pw: &[u8] , ap_pw : &[u8], rand_bytes: usize,assert_is_success: bool) -> optee_teec::Result<()> {
     // 创建会话
     let mut sta_ctx = SaeCaContext::new_ctx()?;
     let mut ap_ctx = SaeCaContext::new_ctx()?;
@@ -73,11 +73,11 @@ fn sae_test(pwd_name: &[u8], sta_pw: &[u8] , ap_pw : &[u8], rand_bytes: usize,as
     /* ConfirmExchange */
     // sta accept pmk element
     let sta_pmk = session.confirm_exchange(&ap_token.token)?;
-    println!("sta_pmk is {:?}", sta_pmk);
+    println!("client_result is {:02x?}", sta_pmk);
     assert_eq!(sta_pmk.is_confirm, assert_is_success);
     // ap accept pmk element
     let ap_pmk = peer_session.confirm_exchange(&sta_token.token)?;
-    println!("ap_pmk is {:?}", ap_pmk);
+    println!("server_result is {:02x?}", ap_pmk);
     assert_eq!(ap_pmk.is_confirm, assert_is_success);
 
     Ok(())

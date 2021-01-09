@@ -255,14 +255,23 @@ pub fn enc_req(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
     let mut p0 = unsafe { params.0.as_memref().unwrap()};
     let mut p1 = unsafe { params.1.as_memref().unwrap()};   
 
+    // 检查权限
+    let account  =  DragonflyOp::handle_option(&op.pwd_name)?;
+    if account.to_vec() != Vec::<u8>::from("root"){
+        return Err(Error::new(ErrorKind::AccessDenied));
+    };
+
     // 获取key
-    /* let secret  =  DragonflyOp::handle_option(&op.secret)?;
-    let key: &[u8] =  &secret.kck; */
-    let key = &vec![0xa5u8; 32];  
+    let secret  =  DragonflyOp::handle_option(&op.secret)?;
+    let key: &[u8] =  &secret.kck;
+    // let key = &vec![0xa5u8; 32];  
     
 
     // 获取iv
-    let iv = vec![0x00u8; 16];
+    // let iv = vec![0x00u8; 16];
+    let mut iv: Vec<u8> = vec![0u8; 16];
+    Random::generate(&mut iv);
+
 
     // 获取密文
     let cipher = crypt_op::aes_ctr_256_enc(key, &iv, p0.buffer())?;
@@ -296,10 +305,16 @@ pub fn dec_res(op: &mut DragonflyOp,params: &mut Parameters)-> Result<()> {
         Err(_) => return Err(Error::new(ErrorKind::BadParameters))
     };
 
+    // 检查权限
+    let account  =  DragonflyOp::handle_option(&op.pwd_name)?;
+    if account.to_vec() != Vec::<u8>::from("root"){
+        return Err(Error::new(ErrorKind::AccessDenied));
+    };
+
     // 获取key
-    // let secret =  DragonflyOp::handle_option(&op.secret)?;
-    // let key: &[u8] =  &secret.kck;
-    let key = &vec![0xa5u8; 32];  
+    let secret =  DragonflyOp::handle_option(&op.secret)?;
+    let key: &[u8] =  &secret.kck;
+    // let key = &vec![0xa5u8; 32];  
 
     // 获取iv
     let iv = req.iv;
@@ -333,10 +348,16 @@ pub fn termial_pwd_manage(op: &mut DragonflyOp,params: &mut Parameters)-> Result
         Err(_) => return Err(Error::new(ErrorKind::BadParameters))
     };
 
+    // 检查权限
+    let account  =  DragonflyOp::handle_option(&op.pwd_name)?;
+    if account.to_vec() != Vec::<u8>::from("root"){
+        return Err(Error::new(ErrorKind::AccessDenied));
+    };
+
     // 获取key
-    // let secret =  DragonflyOp::handle_option(&op.secret)?;
-    // let key: &[u8] =  &secret.kck;
-    let key = &vec![0xa5u8; 32];  
+    let secret =  DragonflyOp::handle_option(&op.secret)?;
+    let key: &[u8] =  &secret.kck;
+    // let key = &vec![0xa5u8; 32];  
 
     // 获取iv
     let iv = req.iv;
@@ -391,7 +412,10 @@ pub fn termial_pwd_manage(op: &mut DragonflyOp,params: &mut Parameters)-> Result
     let res_vec = proto::serde_json::to_vec(&res).unwrap();
 
     // 获取iv
-    let iv = vec![0x00u8; 16];
+    // let iv = vec![0x00u8; 16];
+    let mut iv: Vec<u8> = vec![0u8; 16];
+    Random::generate(&mut iv);
+
 
     // 获取密文
     let cipher = crypt_op::aes_ctr_256_enc(key, &iv, &res_vec)?;

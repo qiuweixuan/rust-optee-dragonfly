@@ -164,6 +164,8 @@ impl<'a>  DragonflyOp<'a> {
         let mut rand_op: Vec<u8> = vec![0u8; rand_bytes];
 
         Random::generate(&mut rand_op);
+        trace_println!("private:{:02x?}",&rand_op);
+        
         let rand_bigint = gp_bigint::bigint_construct_from_gpstr(&rand_op)?;
         let  (_, mut private) = gp_bigint::bigint_div_rem(&rand_bigint, &self.ffc_elemnt.order)?;
         if BigInt::compare_big_int(&private,&two) < 0{
@@ -171,14 +173,15 @@ impl<'a>  DragonflyOp<'a> {
         }
 
         Random::generate(&mut rand_op);
+        trace_println!("mask:{:02x?}",&rand_op);
         let rand_bigint = gp_bigint::bigint_construct_from_gpstr(&rand_op)?;
         let (_, mut mask) = gp_bigint::bigint_div_rem(&rand_bigint, &self.ffc_elemnt.order)?;
         if BigInt::compare_big_int(&mask,&two) < 0{
             mask = gp_bigint::bigint_assign(&two);
         }
 
-        trace_println!("private:{}",&private);
-        trace_println!("mask:{}",&mask);
+        // trace_println!("private:{}",&private);
+        // trace_println!("mask:{}",&mask);
 
 
         // scalar = (private + mask) modulo q
