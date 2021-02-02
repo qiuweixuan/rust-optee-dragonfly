@@ -111,12 +111,9 @@ impl<'a>  DragonflyOp<'a> {
             one.convert_from_s32(1);
             let p_1 = BigInt::sub(&self.ffc_elemnt.prime,&one);
 
-            // let seed = BigInt::module(&temp,&p_1);
-            // let mut seed = BigInt::add(&seed,&one);
-            // gp_bigint::bigint_normalize(&mut seed);
 
-            let mut seed = BigInt::module(&temp,&self.ffc_elemnt.prime);
-            gp_bigint::bigint_normalize(&mut seed);
+            let  seed = BigInt::module(&temp,&self.ffc_elemnt.prime);
+            
 
             // trace_println!("seed:{}",&seed);
 

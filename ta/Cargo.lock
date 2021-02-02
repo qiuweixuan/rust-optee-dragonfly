@@ -313,6 +313,7 @@ dependencies = [
  "hex 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.59",
  "num-bigint 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-integer 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)",
  "optee-utee 0.1.0",
  "optee-utee-sys 0.1.0",
  "proto 0.1.0",
